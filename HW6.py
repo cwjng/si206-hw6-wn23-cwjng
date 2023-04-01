@@ -156,7 +156,7 @@ def get_starships(filename):
             s_list = []
             
             # validate urls exists
-            if urls:
+            if starship_urls:
                 # iterate through each url
                 for url in starship_urls:
                     # store data swapi information for each url
@@ -185,8 +185,25 @@ def calculate_bmi(filename):
     -------
     dict: dictionary with the name as a key and the BMI as the value
     '''
-
-    pass
+    data = load_json(filename)
+    bmi_dict = {}
+    # iterate through data pages
+    for i in data:
+        # iterate through character's page content
+        for x in data[i]:
+            # store name
+            name = x['name']
+            # validate height and mass values exist
+            if x['height'] != 'unknown' and x['mass'] != 'unknown':
+                # store height and convert to centimeters
+                height = float(x['height']) / 100
+                # store mass, getting rid of commas
+                mass = float(x['mass'].replace(',', ''))
+                # divide mass by height squared, rounding to the nearest 2 decimals
+                bmi = round(mass / (height ** 2), 2)
+                # store bmi and name key-value pair to dict
+                bmi_dict[name] = bmi
+    return bmi_dict
 
 class TestHomework6(unittest.TestCase):
     def setUp(self):
@@ -195,22 +212,22 @@ class TestHomework6(unittest.TestCase):
         self.cache = load_json(self.filename)
         self.url = "https://swapi.dev/api/people"
 
-    # def test_write_json(self):
-    #     write_json(self.filename, self.cache)
-    #     dict1 = load_json(self.filename)
-    #     self.assertEqual(dict1, self.cache)
+    def test_write_json(self):
+        write_json(self.filename, self.cache)
+        dict1 = load_json(self.filename)
+        self.assertEqual(dict1, self.cache)
 
-    # def test_get_swapi_info(self):
-    #     people = get_swapi_info(self.url)
-    #     tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
-    #     self.assertEqual(type(people), dict)
-    #     self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
-    #     self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
+    def test_get_swapi_info(self):
+        people = get_swapi_info(self.url)
+        tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
+        self.assertEqual(type(people), dict)
+        self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
+        self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
     
-    # def test_cache_all_pages(self):
-    #     cache_all_pages(self.url, self.filename)
-    #     swapi_people = load_json(self.filename)
-    #     self.assertEqual(type(swapi_people['page 1']), list)
+    def test_cache_all_pages(self):
+        cache_all_pages(self.url, self.filename)
+        swapi_people = load_json(self.filename)
+        self.assertEqual(type(swapi_people['page 1']), list)
 
     def test_get_starships(self):
         starships = get_starships(self.filename)
@@ -218,10 +235,10 @@ class TestHomework6(unittest.TestCase):
         self.assertEqual(type(starships["Luke Skywalker"]), list)
         self.assertEqual(starships['Biggs Darklighter'][0], 'X-wing')
 
-    # def test_calculate_bmi(self):
-    #     bmi = calculate_bmi(self.filename)
-    #     self.assertEqual(len(bmi), 59)
-    #     self.assertAlmostEqual(bmi['Greedo'], 24.73)
+    def test_calculate_bmi(self):
+        bmi = calculate_bmi(self.filename)
+        self.assertEqual(len(bmi), 59)
+        self.assertAlmostEqual(bmi['Greedo'], 24.73)
     
 if __name__ == "__main__":
     unittest.main(verbosity=2)
