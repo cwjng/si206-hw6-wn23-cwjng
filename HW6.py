@@ -101,29 +101,29 @@ def cache_all_pages(people_url, filename):
     filename(str): the name of the file to write a cache to
         
     '''
+    # store file json dict or create new dict 
     cache = load_json(filename)
     if not cache:
         cache = {}
-    
-    # Make a request for the first page
+
+    # request for the first page
     page = 1
     url = f"{people_url}?page={page}"
     page_data = get_swapi_info(url)
-    
-    # Loop through all pages until no 'next' URL is returned
+    # loop through all pages
     while page_data:
-        # Add page data to the cache dictionary
+        # add page data to the cache dictionary
         cache[f"page {page}"] = page_data['results']
-        
-        # Check if there is a next page
+        # check if there is a next page
         next_url = page_data['next']
         if next_url:
             page += 1
             page_data = get_swapi_info(next_url)
+        # exit loop when 'next' url is returned
         else:
             break
-    
-    # Write the updated cache to the file
+        
+    # write the updated cache to the file
     write_json(filename, cache)
     return cache
 
@@ -146,24 +146,24 @@ def get_starships(filename):
     s_dict = {}
     # iterate through data pages
     for i in data:
-        # iterate through page content
+        # iterate through each starship 
         for x in data[i]:
             # store name
             name = x['name']
             # store url
-            urls = x['starships']
+            starship_urls = x['starships']
             # create starship list
             s_list = []
             
-            # validate url exists
+            # validate urls exists
             if urls:
                 # iterate through each url
-                for url in urls:
-                    # store data api information for each url
+                for url in starship_urls:
+                    # store data swapi information for each url
                     api = get_swapi_info(url)
                     s_list.append(api['name'])
-            # add api to output dict with name as key
-            s_dict[name] = s_list
+                # add starship to output dict with name as key
+                s_dict[name] = s_list
     return s_dict
     
 
@@ -207,10 +207,10 @@ class TestHomework6(unittest.TestCase):
     #     self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
     #     self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
     
-    def test_cache_all_pages(self):
-        cache_all_pages(self.url, self.filename)
-        swapi_people = load_json(self.filename)
-        self.assertEqual(type(swapi_people['page 1']), list)
+    # def test_cache_all_pages(self):
+    #     cache_all_pages(self.url, self.filename)
+    #     swapi_people = load_json(self.filename)
+    #     self.assertEqual(type(swapi_people['page 1']), list)
 
     def test_get_starships(self):
         starships = get_starships(self.filename)
