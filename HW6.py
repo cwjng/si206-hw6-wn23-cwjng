@@ -23,10 +23,13 @@ def load_json(filename):
         if the cache exists, a dict with loaded data
         if the cache does not exist, an empty dict
     '''
+    # file exists
     try:
         with open(filename, 'r', encoding='UTF-8') as f:
+            # create json object
             data = json.load(f)
             return data
+    # file does not exist
     except FileNotFoundError:
         return {}
 
@@ -47,8 +50,10 @@ def write_json(filename, dict):
     None
         does not return anything
     '''  
-
-    pass
+    with open(filename, 'w') as f:
+        # write dict into json file, set indent to 4
+        json.dump(dict, f, indent=4)
+    return
 
 def get_swapi_info(url, params=None):
     '''
