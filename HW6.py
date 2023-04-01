@@ -71,8 +71,15 @@ def get_swapi_info(url, params=None):
     -------
     dict: dictionary representation of the decoded JSON.
     '''
-
-    pass
+    r = requests.get(url, params)
+    # request status is successful
+    if r.status_code == 200:
+        # return response python object in json format
+        return r.json()
+    # request status fails
+    else:
+        print('Exception!')
+        return 
 
 def cache_all_pages(people_url, filename):
     '''
@@ -141,12 +148,12 @@ class TestHomework6(unittest.TestCase):
         dict1 = load_json(self.filename)
         self.assertEqual(dict1, self.cache)
 
-    # def test_get_swapi_info(self):
-    #     people = get_swapi_info(self.url)
-    #     tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
-    #     self.assertEqual(type(people), dict)
-    #     self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
-    #     self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
+    def test_get_swapi_info(self):
+        people = get_swapi_info(self.url)
+        tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
+        self.assertEqual(type(people), dict)
+        self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
+        self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
     
     # def test_cache_all_pages(self):
     #     cache_all_pages(self.url, self.filename)
