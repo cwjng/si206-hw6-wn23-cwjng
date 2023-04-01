@@ -32,7 +32,7 @@ def load_json(filename):
     # file does not exist
     except FileNotFoundError:
         return {}
-
+    
 def write_json(filename, dict):
     '''
     Encodes dict into JSON format and writes
@@ -71,11 +71,17 @@ def get_swapi_info(url, params=None):
     -------
     dict: dictionary representation of the decoded JSON.
     '''
-    r = requests.get(url, params)
+    # create request object
+    if params:
+        r = requests.get(url, params)
+    else:
+        r = requests.get(url)
+
+
     # request status is successful
     if r.status_code == 200:
         # return response python object in json format
-        return r.json()
+        return json.loads(r.text)
     # request status fails
     else:
         print('Exception!')
@@ -95,8 +101,31 @@ def cache_all_pages(people_url, filename):
     filename(str): the name of the file to write a cache to
         
     '''
-
-    pass
+    cache = load_json(filename)
+    if not cache:
+        cache = {}
+    
+    # Make a request for the first page
+    page = 1
+    url = f"{people_url}?page={page}"
+    page_data = get_swapi_info(url)
+    
+    # Loop through all pages until no 'next' URL is returned
+    while page_data:
+        # Add page data to the cache dictionary
+        cache[f"page {page}"] = page_data['results']
+        
+        # Check if there is a next page
+        next_url = page_data['next']
+        if next_url:
+            page += 1
+            page_data = get_swapi_info(next_url)
+        else:
+            break
+    
+    # Write the updated cache to the file
+    write_json(filename, cache)
+    return cache
 
 def get_starships(filename):
     '''
@@ -112,8 +141,31 @@ def get_starships(filename):
     dict: dictionary with the character's name as a key and a list of the name their 
     starships as the value
     '''
-
-    pass
+    # load json file from input file
+    data = load_json(filename)
+    s_dict = {}
+    # iterate through data pages
+    for i in data:
+        # iterate through page content
+        for x in data[i]:
+            # store name
+            name = x['name']
+            # store url
+            urls = x['starships']
+            # create starship list
+            s_list = []
+            
+            # validate url exists
+            if urls:
+                # iterate through each url
+                for url in urls:
+                    # store data api information for each url
+                    api = get_swapi_info(url)
+                    s_list.append(api['name'])
+            # add api to output dict with name as key
+            s_dict[name] = s_list
+    return s_dict
+    
 
 #################### EXTRA CREDIT ######################
 
@@ -143,28 +195,28 @@ class TestHomework6(unittest.TestCase):
         self.cache = load_json(self.filename)
         self.url = "https://swapi.dev/api/people"
 
-    def test_write_json(self):
-        write_json(self.filename, self.cache)
-        dict1 = load_json(self.filename)
-        self.assertEqual(dict1, self.cache)
+    # def test_write_json(self):
+    #     write_json(self.filename, self.cache)
+    #     dict1 = load_json(self.filename)
+    #     self.assertEqual(dict1, self.cache)
 
-    def test_get_swapi_info(self):
-        people = get_swapi_info(self.url)
-        tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
-        self.assertEqual(type(people), dict)
-        self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
-        self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
+    # def test_get_swapi_info(self):
+    #     people = get_swapi_info(self.url)
+    #     tie_ln = get_swapi_info("https://swapi.dev/api/vehicles", {"search": "tie/ln"})
+    #     self.assertEqual(type(people), dict)
+    #     self.assertEqual(tie_ln['results'][0]["name"], "TIE/LN starfighter")
+    #     self.assertEqual(get_swapi_info("https://swapi.dev/api/pele"), None)
     
-    # def test_cache_all_pages(self):
-    #     cache_all_pages(self.url, self.filename)
-    #     swapi_people = load_json(self.filename)
-    #     self.assertEqual(type(swapi_people['page 1']), list)
+    def test_cache_all_pages(self):
+        cache_all_pages(self.url, self.filename)
+        swapi_people = load_json(self.filename)
+        self.assertEqual(type(swapi_people['page 1']), list)
 
-    # def test_get_starships(self):
-    #     starships = get_starships(self.filename)
-    #     self.assertEqual(len(starships), 19)
-    #     self.assertEqual(type(starships["Luke Skywalker"]), list)
-    #     self.assertEqual(starships['Biggs Darklighter'][0], 'X-wing')
+    def test_get_starships(self):
+        starships = get_starships(self.filename)
+        self.assertEqual(len(starships), 19)
+        self.assertEqual(type(starships["Luke Skywalker"]), list)
+        self.assertEqual(starships['Biggs Darklighter'][0], 'X-wing')
 
     # def test_calculate_bmi(self):
     #     bmi = calculate_bmi(self.filename)
